@@ -1,0 +1,16 @@
+# Ignore Python environment
+.venv/
+
+# Ignore compiled files
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+llm.py
+test.py
+
+# Ignore system files
+.DS_Store
+temp_uploaded.pdf
