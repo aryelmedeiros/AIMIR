@@ -4,7 +4,7 @@ import requests
 API_KEY = "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"
 
 # Configuration
-MODEL_NAME = "google/flan-t5-large"  # Can replace with DeepSeek model
+MODEL_NAME = "google/flan-t5-large"  # 
 API_URL = f"https://api-inference.huggingface.co/models/{MODEL_NAME}"
 HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 
@@ -35,7 +35,7 @@ Answer:"""
         # Show the detailed error in your Streamlit app
         st.error(f"API Error: {output['error']}")
         st.text(f"Details: {output.get('details', 'No details')}")
-        return "Sorry, I couldn't generate an answer due to an API error."
+        return "Desculpe, não foi possivel gerar uma resposta devido a um erro na API."
     
     # Handle different response formats from different models
     if isinstance(output, list):
@@ -43,4 +43,4 @@ Answer:"""
             full_response = output[0]['generated_text']
             return full_response.split("Answer:")[-1].strip()
     
-    return "Sorry, I couldn't generate an answer. (Unexpected response format)"
+    return "Não foi possivel gerar uma resposta. (Unexpected response format)"

@@ -14,12 +14,9 @@ if uploaded_file is not None:
     
     st.success(f"PDF carregado com sucesso! O documento contém {len(text)} caracteres.")
     
-    # Question input
     question = st.text_input("Faça uma pergunta sobre o PDF:")
     
     if question:
-        # For simplicity, we'll use the whole text as context
-        # In a production app, you'd implement chunking and retrieval
         with st.spinner("Gerando resposta..."):
             answer = generate_answer(question, text[:3000])  # Limit context to 3000 chars
         
