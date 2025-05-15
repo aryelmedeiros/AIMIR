@@ -3,12 +3,16 @@ from openai import OpenAI
 import chromadb
 from chromadb.utils import embedding_functions
 import os 
+from dotenv import load_dotenv
 from PIL import Image
 import tempfile
 
 from loader import generate_answer
 from pdf_loader import extract_text_from_pdf
 from llm import SimpleRAG
+
+
+load_dotenv()
 
 def trascricao(arquivo_path):
     with open(arquivo_path, "rb") as audio_file:
@@ -40,10 +44,10 @@ def RAG(query,collection):
 
 
 
-openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 chroma_client = chromadb.PersistentClient(path="chroma_db")
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=st.secrets["OPENAI_API_KEY"],
+    api_key=os.getenv("OPENAI_API_KEY"),
     model_name="text-embedding-3-small"
 )
 collection = chroma_client.get_or_create_collection(
@@ -90,24 +94,8 @@ if uploaded_image and uploaded_audio is not None:
         response = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You answer questions based on the user's stored audio transcriptions."},
+                {"role": "system", "content": "Você deve responder as questões baseado nas trascrições de audio armazenadas do usuario."},
                 {"role": "user", "content": f"Question: {query}\nContext: {resultado}"}
             ]
         )
-        st.write("**Answer:**", response.choices[0].message.content)
-
-    '''
-
-    #text = extract_text_from_pdf(uploaded_file)
-    
-    st.success(f"PDF carregado com sucesso! O documento contém {len(text)} caracteres.")
-    
-    question = st.text_input("Faça uma pergunta sobre o PDF:")
-    
-    if question:
-        with st.spinner("Gerando resposta..."):
-            answer = generate_answer(question, text[:3000])  # Limit context to 3000 chars
-        
-        st.subheader("Resposta:")
-        st.write(answer)
-'''
+        st.write("**Resposta:**", response.choices[0].message.content)

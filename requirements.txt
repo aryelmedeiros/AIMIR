@@ -6,5 +6,3 @@ PyMuPDF
 PyPDF2
 python-multipart 
 pillow
-tiktoken
-langchain-community

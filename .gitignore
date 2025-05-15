@@ -2,6 +2,9 @@
 .venv/
 
 .env
+secrets.tom
+
+chroma_db/
 
 # Ignore compiled files
 
