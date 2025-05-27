@@ -61,32 +61,45 @@ st.title("🧠📄 Faça perguntas sobre as imagens com base em audios!")
 
 # Upload PDF
 uploaded_image = st.file_uploader("Carregue a imagem", type=["jpg","png","jpeg"])
+uplaoded_description = st.file_uploader("Carregue o arquivo de descrição da imagem", type=["txt"])
 uploaded_audio = st.file_uploader("Carregue o arquivo de audio", type=["wav","mp3"])
 
 
-if uploaded_image and uploaded_audio is not None:
+if uploaded_image is not None:
 
-    image = Image.open(uploaded_image)
-    st.image(image, caption="Imagem Enviada", use_column_width=True)
+    if uploaded_audio is not None:
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_audio:
-        tmp_audio.write(uploaded_audio.read())
-        audio_path = tmp_audio.name
-    
-    audio_transcription = trascricao(audio_path)
+        image = Image.open(uploaded_image)
+        st.image(image, caption="Imagem Enviada", use_column_width=True)
 
-    os.unlink(audio_path)  # Delete temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_audio:
+            tmp_audio.write(uploaded_audio.read())
+            audio_path = tmp_audio.name
+        
+        audio_transcription = trascricao(audio_path)
 
-    st.write("**Transcrição:**", audio_transcription)
+        os.unlink(audio_path)  # Delete temp file
 
-    try:
-        salvarDB(uploaded_image,audio_transcription,collection)
-        st.success("Transcrição salva com Sucesso")
-    except Exception as e:
-        st.error("Não foi possivel salvar a transcriação no Banco de Dados")
+        st.write("**Transcrição:**", audio_transcription)
 
-    query = st.text_input("Faça uma pergunta sobre os dados armazenados")
+        try:
+            salvarDB(uploaded_image,audio_transcription,collection)
+            st.success("Transcrição salva com Sucesso")
+        except Exception as e:
+            st.error("Não foi possivel salvar a transcriação no Banco de Dados")
 
+    elif uplaoded_description is not None:
+        descricao = uplaoded_description.read().decode("utf-8")
+        st.write("**Descrição inserida: :**", descricao)
+
+        try:
+            salvarDB(uploaded_image,descricao,collection)
+            st.success("Descrição salva com Sucesso")
+        except Exception as e:
+            st.error("Não foi possivel salvar a transcriação no Banco de Dados")
+
+
+    query = st.text_input("Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
 
     if query:
         resultado = RAG(query,collection)
