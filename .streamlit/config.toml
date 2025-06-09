@@ -1,0 +1,7 @@
+[theme]
+base="dark"
+primaryColor="#FF4B4B"  # Example: A common Streamlit primary color
+backgroundColor="#000000" # Black background
+secondaryBackgroundColor="#111111" # A slightly lighter dark for secondary elements
+textColor="#FAFAFA" # White or off-white text
+font="sans serif"

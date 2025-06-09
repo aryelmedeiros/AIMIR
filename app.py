@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from PIL import Image
 import tempfile
+import hashlib
 
 from loader import generate_answer
 from pdf_loader import extract_text_from_pdf
@@ -29,10 +30,31 @@ def salvarDB(imagem, transcricao, collection):
     collection.add(
         documents=[transcricao],
         ids=[image_id],
-        metadatas=[{"image_name": image_id}]
+        metadatas=[{"image_name": image_id,
+                    "cache": {}
+        }]
     )
 
-def RAG(query,collection):
+def updateDB(image_id, cache, collection, metadata):
+     collection.update(
+        ids=[image_id],
+        metadatas=[{**metadata, "cache": cache}]
+    )
+
+def consultaDB(query, collection,  include_metadata: bool = False, include_documents: bool = True ):
+    results = collection.query(
+        query_texts=[query],
+        n_results=1,
+        include=["metadatas"] if include_metadata else ["documents"]
+    )
+
+    if include_metadata:
+        return results["metadatas"][0][0]  
+    else:
+        return results["documents"][0][0] 
+
+
+def get_transcricao(query,collection):
 
     results = collection.query(
         query_texts=[query],
@@ -41,6 +63,34 @@ def RAG(query,collection):
     retrieved_text = results["documents"][0][0]
 
     return retrieved_text
+
+def requestGPT(query, context):
+    response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Você deve responder as questões baseado nas trascrições de audio armazenadas do usuario."},
+                {"role": "user", "content": f"Question: {query}\nContext: {context}"}
+            ]
+        )
+    return response
+
+def get_cached_response(query, image_id, collection):
+
+    query_hash = hashlib.md5(query.encode()).hexdigest()
+    metadata = consultaDB(query,collection,include_metadata=True)
+    
+    # Verifica o cache
+    cache = metadata.get("cache", {})
+    if query_hash in cache:
+        return cache[query_hash] 
+
+    response = requestGPT(query,metadata)
+
+    # Update cache in ChromaDB
+    cache[query_hash] = response.choices[0].message.content
+    updateDB(image_id,cache,collection,metadata)
+    
+    return response
 
 
 
