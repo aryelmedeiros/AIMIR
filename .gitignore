@@ -5,6 +5,7 @@
 secrets.tom
 
 chroma_db/
+data/
 
 # Ignore compiled files
 

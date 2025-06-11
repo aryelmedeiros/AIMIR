@@ -8,10 +8,6 @@ from PIL import Image
 import tempfile
 import hashlib
 
-from loader import generate_answer
-from pdf_loader import extract_text_from_pdf
-from llm import SimpleRAG
-
 
 load_dotenv()
 
@@ -25,13 +21,21 @@ def trascricao(arquivo_path):
     
     return transcription
 
+def salvar_imagem(imagem):
+    image_path = f"data/imagens/{imagem.name}"
+    Image.open(imagem).save(image_path)
+    return image_path
+
 def salvarDB(imagem, transcricao, collection):
+    image_path = salvar_imagem(imagem)
     image_id = imagem.name
+    st.success(str(image_path))
     collection.add(
         documents=[transcricao],
         ids=[image_id],
         metadatas=[{"image_name": image_id,
-                    "cache": {}
+                    "image_path": str(image_path),
+                    "cahce": ""
         }]
     )
 
@@ -42,6 +46,19 @@ def updateDB(image_id, cache, collection, metadata):
     )
 
 def consultaDB(query, collection,  include_metadata: bool = False, include_documents: bool = True ):
+
+    try:
+        result = collection.get(ids=[query], include=["metadatas", "documents"])
+        if result["ids"]:  # encontrou
+            return {
+                "type": "match_id",
+                "image_name": result["metadatas"][0]["image_name"],
+                "image_path": result["metadatas"][0]["image_path"],
+                "description": result["documents"][0]
+            }
+    except Exception:
+        pass 
+
     results = collection.query(
         query_texts=[query],
         n_results=1,
@@ -78,6 +95,12 @@ def get_cached_response(query, image_id, collection):
 
     query_hash = hashlib.md5(query.encode()).hexdigest()
     metadata = consultaDB(query,collection,include_metadata=True)
+
+    #Precisa verificar se o arquivo foi encontrado por ID ou por query, 
+    # caso seja por ID da a opção de addicionar uma pergunta sobre os dados
+    # caso seja por Query, é verificado se a pergunta está em cache 
+    #       caso não esteja em cahce, é requisitada ao GPT
+    #       caso esteja, será retornado a resposta associada.
     
     # Verifica o cache
     cache = metadata.get("cache", {})
@@ -105,22 +128,32 @@ collection = chroma_client.get_or_create_collection(
     embedding_function=openai_ef
 )
 
-
 # --- Streamlit UI ---
 st.title("🧠📄 Faça perguntas sobre as imagens com base em audios!")
+
+if st.button("⚠️ Delete Entire Collection"):
+    try:
+        chroma_client.delete_collection("image_audio_data")
+        st.success("Collection deleted!") 
+        collection = chroma_client.get_or_create_collection(
+            name="image_audio_data",
+            embedding_function=openai_ef
+        )
+        st.success("Collection created!")
+
+    except Exception as e:
+        st.error(f"Error: {e}")
 
 # Upload PDF
 uploaded_image = st.file_uploader("Carregue a imagem", type=["jpg","png","jpeg"])
 uplaoded_description = st.file_uploader("Carregue o arquivo de descrição da imagem", type=["txt"])
 uploaded_audio = st.file_uploader("Carregue o arquivo de audio", type=["wav","mp3"])
 
-
 if uploaded_image is not None:
+    image = Image.open(uploaded_image)
+    st.image(image, caption="Imagem Enviada", use_column_width=True)
 
     if uploaded_audio is not None:
-
-        image = Image.open(uploaded_image)
-        st.image(image, caption="Imagem Enviada", use_column_width=True)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_audio:
             tmp_audio.write(uploaded_audio.read())
@@ -137,6 +170,7 @@ if uploaded_image is not None:
             st.success("Transcrição salva com Sucesso")
         except Exception as e:
             st.error("Não foi possivel salvar a transcriação no Banco de Dados")
+            st.error(f"Error: {e}")
 
     elif uplaoded_description is not None:
         descricao = uplaoded_description.read().decode("utf-8")
@@ -147,18 +181,24 @@ if uploaded_image is not None:
             st.success("Descrição salva com Sucesso")
         except Exception as e:
             st.error("Não foi possivel salvar a transcriação no Banco de Dados")
+            st.error(f"Error: {e}")
 
 
     query = st.text_input("Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
 
     if query:
-        resultado = RAG(query,collection)
+        resultado = consultaDB(query, collection)
 
-        response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Você deve responder as questões baseado nas trascrições de audio armazenadas do usuario."},
-                {"role": "user", "content": f"Question: {query}\nContext: {resultado}"}
-            ]
-        )
-        st.write("**Resposta:**", response.choices[0].message.content)
+        caminho = resultado.get("image_path", {})
+        id = resultado.get("image_name", {})
+
+        img = Image.open(caminho)
+
+        st.image(img, caption=id)
+
+        #response = get_cached_response(query,id,collection)
+        response= ""
+
+
+        #resultado = RAG(query,collection)
+       # st.write("**Resposta:**", response.choices[0].message.content)
