@@ -129,7 +129,16 @@ collection = chroma_client.get_or_create_collection(
 )
 
 # --- Streamlit UI ---
-st.title("🧠📄 Faça perguntas sobre as imagens com base em audios!")
+with st.sidebar:
+    st.title("Adicione Arquivos a Base de Dados 📑")
+    st.caption("Adicione uma imagem associada de um arquivo de descrição (Audio ou Texto)")
+    uploaded_image = st.file_uploader("Carregue a imagem", type=["jpg","png","jpeg"])
+    uplaoded_description = st.file_uploader("Carregue o arquivo de descrição da imagem", type=["txt"])
+    uploaded_audio = st.file_uploader("Carregue o arquivo de audio", type=["wav","mp3"])
+    botao_enviar = st.button("💾 SALVAR")
+
+st.title("Assistente de Imagens Medicas 🩻")
+st.caption("ℹ️ Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
 
 if st.button("⚠️ Delete Entire Collection"):
     try:
@@ -145,13 +154,37 @@ if st.button("⚠️ Delete Entire Collection"):
         st.error(f"Error: {e}")
 
 # Upload PDF
-uploaded_image = st.file_uploader("Carregue a imagem", type=["jpg","png","jpeg"])
-uplaoded_description = st.file_uploader("Carregue o arquivo de descrição da imagem", type=["txt"])
-uploaded_audio = st.file_uploader("Carregue o arquivo de audio", type=["wav","mp3"])
+
+query = st.text_input("Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display historical messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Get user input
+if prompt := st.chat_input("Say something..."):
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    # Display user message
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Simulate an AI response (replace with your actual LLM logic)
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            # Your AI model call would go here
+            response = f"Echo: {prompt}" # Simple echo for demonstration
+            st.markdown(response)
+            # Add assistant message to chat history
+            st.session_state.messages.append({"role": "assistant", "content": response})
 
 if uploaded_image is not None:
     image = Image.open(uploaded_image)
-    st.image(image, caption="Imagem Enviada", use_column_width=True)
+    st.image(image, caption="Imagem Enviada", use_container_width=True)
 
     if uploaded_audio is not None:
 
@@ -184,7 +217,7 @@ if uploaded_image is not None:
             st.error(f"Error: {e}")
 
 
-    query = st.text_input("Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
+    
 
     if query:
         resultado = consultaDB(query, collection)
