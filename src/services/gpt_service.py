@@ -18,6 +18,12 @@ def get_cached_response(query:str, image_id, collection):
 
     query_hash = hashlib.md5(query.encode()).hexdigest()
     metadata = consultaDB(query,collection,include_metadata=True)
+    '''
+        Talvez seja interessante utilizar primeiro o GPT para entender o tipo de requisição feita,
+        caso se trate de uma chamada a uma imagem do banco pelo nome (Ex.: Image_00), uma pergunta 
+        sobre algum dado do banco (Ex.: Quero uma imagem que apresente uma carie no dente 47) ou uma
+        consulta sobre as informações do banco (Ex.: Quantas imgens apresentam carries)
+    '''
 
     #Precisa verificar se o arquivo foi encontrado por ID ou por query, 
     # caso seja por ID da a opção de addicionar uma pergunta sobre os dados

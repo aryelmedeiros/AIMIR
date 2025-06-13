@@ -23,19 +23,17 @@ with st.sidebar:
     uplaoded_description = st.file_uploader("Carregue o arquivo de descrição da imagem", type=["txt"])
     uploaded_audio = st.file_uploader("Carregue o arquivo de audio", type=["wav","mp3"])
     botao_enviar = st.button("💾 SALVAR")
+    if st.button("⚠️ Apagar Todas Imagens Salvas"):
+        if ChromaDBClient.clear_collection():
+            st.success("Banco do Imagens Limpo")
+        else:
+            st.warning("Falha ao Limpar Banco de Imagens")
 
 if botao_enviar:
     salvar_dados(uploaded_image,uploaded_audio,uplaoded_description)
 
-if st.button("⚠️ Apagar Imagens Salvas"):
-    if ChromaDBClient.clear_collection():
-        st.success("Banco do Imagens Limpo")
-    else:
-        st.warning("Falha ao Limpar Banco de Imagens")
-
-# Upload PDF
-
-query = st.text_input("Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
+query = False
+#query = st.text_input("Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
