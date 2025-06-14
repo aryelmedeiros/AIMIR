@@ -1,6 +1,7 @@
 import streamlit as st
 from ..utils.imagem import salvar_imagem
 from ..database.cliente import collection
+from ..services.gpt_service import requestGPT
 
 def salvarDB(imagem, transcricao):
     image_path = salvar_imagem(imagem)
@@ -45,6 +46,18 @@ def consultaDB(query:str,  include_metadata: bool = False, include_documents: bo
         return results["metadatas"][0][0]  
     else:
         return results["documents"][0][0] 
+
+def analizarDB(query:str, include_metadata: bool = False, include_documents: bool = True):
+    
+    prompt = f"""Answer based on this database schema:
+    - Images: {collection.count()}
+    - Metadata fields: {collection.metadata_keys}
+    
+    Question: {query}
+    """
+    requestGPT(prompt)
+
+    return
 
 def get_transcricao(query:str):
 

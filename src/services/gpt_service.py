@@ -3,7 +3,9 @@ from services.transcricao_service import openai_client
 import hashlib
 from src.database.operations import consultaDB, updateDB
 
-
+'''
+Acreito ser interessante ter um metodo para requisições ao GPT com documentos como contexto e uma apenas geral (nesse caso com um max_tokens para diminuir gatos). 
+'''
 def requestGPT(query:str, context):
     response = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -13,6 +15,41 @@ def requestGPT(query:str, context):
             ]
         )
     return response
+
+def classificar_query(query:str):
+
+    VALID_CATEGORIES = {"EXACT_IMAGE", "SEARCH_IMAGE", "DB_QUERY", "OTHER"}
+    
+    try:
+        response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo", 
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Classifique a consulta em EXACT_IMAGE, SEARCH_IMAGE, DB_QUERY ou OTHER. "
+                        "Responda APENAS com o nome da categoria, sem pontuação ou explicações.\n\n"
+                        "EXEMPLOS:\n"
+                        "'Mostre IMG_45' → EXACT_IMAGE\n"
+                        "'Raio-X com cárie' → SEARCH_IMAGE\n"
+                        "'Quantas imagens existem?' → DB_QUERY\n"
+                        "'Explique cárie dentária' → OTHER"
+                    )
+                },
+                {"role": "user", "content": query}
+            ],
+            temperature=0,
+            max_tokens=5,
+            logprobs=True  # Get confidence scores if needed
+        )
+        
+        # Extract and validate response
+        category = response.choices[0].message.content.strip().upper()
+        return category if category in VALID_CATEGORIES else "OTHER"
+        
+    except Exception as e:
+        print(f"Classification error: {e}")
+        return "OTHER"  # Fallback to safe default
 
 def get_cached_response(query:str, image_id, collection):
 

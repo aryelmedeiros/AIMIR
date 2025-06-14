@@ -38,16 +38,16 @@ query = False
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display historical messages
+# Hisotrico de Mensagens
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Get user input
-if prompt := st.chat_input("Say something..."):
-    # Add user message to chat history
+# Prompt do usuario
+if prompt := st.chat_input("Faça uma consulta..."):
+    # Add prompt ao historico
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # Display user message
+    # Apresentar mensagem do usuarip
     with st.chat_message("user"):
         st.markdown(prompt)
 
@@ -55,6 +55,8 @@ if prompt := st.chat_input("Say something..."):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             # Your AI model call would go here
+
+            
             response = f"Echo: {prompt}" # Simple echo for demonstration
             st.markdown(response)
             # Add assistant message to chat history
