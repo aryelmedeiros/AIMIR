@@ -20,7 +20,7 @@ def salvar_dados(uploaded_image, uploaded_audio, uplaoded_description):
             
             audio_transcription = trascricao(audio_path)
 
-            os.unlink(audio_path)  # Delete temp file
+            os.unlink(audio_path)  # Deletar temp file
 
             st.write("**Transcrição:**", audio_transcription)
 

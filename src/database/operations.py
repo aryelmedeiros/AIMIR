@@ -27,6 +27,7 @@ def consultaDB(query:str,  include_metadata: bool = False, include_documents: bo
     try:
         result = collection.get(ids=[query], include=["metadatas", "documents"])
         if result["ids"]:  # encontrou
+            #st.success("Encontrado")
             return {
                 "type": "match_id",
                 "image_name": result["metadatas"][0]["image_name"],
@@ -34,22 +35,31 @@ def consultaDB(query:str,  include_metadata: bool = False, include_documents: bo
                 "description": result["documents"][0]
             }
     except Exception:
+        st.warning(f"Imagem de Id {query} não encontrada")
         pass 
-
+    
+    st.success("Consulta Semantica")
     results = collection.query(
         query_texts=[query],
         n_results=1,
-        include=["metadatas"] if include_metadata else ["documents"]
+        include=["metadatas"] if include_metadata else ["metadatas","documents"]
     )
 
     if include_metadata:
+        print(results)
         return results["metadatas"][0][0]  
     else:
-        return results["documents"][0][0] 
+        st.success("Pesquisa OK")
+        print(results)
+        return {
+            "image_name": results["metadatas"][0][0]["image_name"],
+            "image_path": results["metadatas"][0][0]["image_path"],
+            "description": results["documents"][0][0]
+        }
 
 def analizarDB(query:str, include_metadata: bool = False, include_documents: bool = True):
     
-    prompt = f"""Answer based on this database schema:
+    prompt = f"""Responda baseado nesse database schema:
     - Images: {collection.count()}
     - Metadata fields: {collection.metadata_keys}
     
@@ -57,6 +67,7 @@ def analizarDB(query:str, include_metadata: bool = False, include_documents: boo
     """
     requestGPT(prompt)
 
+##PRECIOS ATUALIZAR 
     return
 
 def get_transcricao(query:str):

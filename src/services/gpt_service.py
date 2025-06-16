@@ -1,20 +1,28 @@
 from openai import OpenAI
-from services.transcricao_service import openai_client
+from src.services.transcricao_service import openai_client
 import hashlib
-from src.database.operations import consultaDB, updateDB
+#from src.database.operations import consultaDB, updateDB
 
-'''
-Acreito ser interessante ter um metodo para requisições ao GPT com documentos como contexto e uma apenas geral (nesse caso com um max_tokens para diminuir gatos). 
-'''
-def requestGPT(query:str, context):
-    response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Você deve responder as questões baseado nas trascrições de audio armazenadas do usuario."},
-                {"role": "user", "content": f"Question: {query}\nContext: {context}"}
-            ]
-        )
-    return response
+def requestGPT(query:str, context, tokens_max = None):
+    if tokens_max == None:
+        response = openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "Você deve responder as questões baseado nas trascrições de audio armazenadas do usuario."},
+                    {"role": "user", "content": f"Question: {query}\nContext: {context}"}
+                ]
+            )
+    else: 
+        response = openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "Você pode responder as questões baseado na descrição das imagens, quando possivel. Responda de maneira concisa"},
+                    {"role": "user", "content": f"Question: {query}\nContext: {context}"}
+                ],
+                max_tokens= tokens_max
+            )
+
+    return response.choices[0].message.content.strip().upper()
 
 def classificar_query(query:str):
 
@@ -40,27 +48,28 @@ def classificar_query(query:str):
             ],
             temperature=0,
             max_tokens=5,
-            logprobs=True  # Get confidence scores if needed
+            logprobs=True  # confidence scores
         )
         
-        # Extract and validate response
+        # Validar Resposta
         category = response.choices[0].message.content.strip().upper()
+        print(f"Categoria do Prompt: {category}")
         return category if category in VALID_CATEGORIES else "OTHER"
         
     except Exception as e:
         print(f"Classification error: {e}")
-        return "OTHER"  # Fallback to safe default
-
+        return "OTHER"  
+'''
 def get_cached_response(query:str, image_id, collection):
 
     query_hash = hashlib.md5(query.encode()).hexdigest()
     metadata = consultaDB(query,collection,include_metadata=True)
-    '''
+   
         Talvez seja interessante utilizar primeiro o GPT para entender o tipo de requisição feita,
         caso se trate de uma chamada a uma imagem do banco pelo nome (Ex.: Image_00), uma pergunta 
         sobre algum dado do banco (Ex.: Quero uma imagem que apresente uma carie no dente 47) ou uma
         consulta sobre as informações do banco (Ex.: Quantas imgens apresentam carries)
-    '''
+
 
     #Precisa verificar se o arquivo foi encontrado por ID ou por query, 
     # caso seja por ID da a opção de addicionar uma pergunta sobre os dados
@@ -80,3 +89,4 @@ def get_cached_response(query:str, image_id, collection):
     updateDB(image_id,cache,collection,metadata)
     
     return response
+'''

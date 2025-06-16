@@ -1,36 +1,98 @@
-import re
+import streamlit as st
+from datetime import datetime
 from ..services.gpt_service import classificar_query
 from ..utils.imagem import extrair_imageid
 from ..database.operations import consultaDB, analizarDB
 from ..services.gpt_service import requestGPT
+from ..utils.imagem import get_imagem
 
-def rota_query(user_input):
+class ChatSessao():
+
+    def __init__(self):
+        self.current_image_id = None  
+        self.current_description = None  #description/transcription
+        self._history = []  # Historico de conversas
+
+    def add_message(self, role: str, content: str):
+        
+        self._history.append({
+            "role": role,
+            "content": content,
+            "time": datetime.now().isoformat()
+        })
+
+    def display_chat(self):
+        
+        for msg in self._history:
+            #print("Carregou")
+            if isinstance(msg, dict) and "role" in msg:
+                with st.chat_message(msg["role"]):
+                    if "image" in msg and msg["image"] is not None:
+                        get_imagem(msg["image"])
+                    st.markdown(msg.get("content", ""))
+                    if "time" in msg:
+                        st.caption(msg["time"][11:19])  # Show HH:MM:SS
+            else:
+                st.warning(f"Invalid message format: {msg}")
+
+    def update_context(self, image_id: str, description: str):
+        
+        self.current_image_id = image_id
+        self.current_description = description
+        st.success(f"Contexto atual: {image_id} - {description[:50]}...")
+        self._history.append({
+            "role": "system", 
+            "content": f"Contexto atual: {image_id} \n {description}",
+            "time": datetime.now().isoformat(),
+            "image": image_id
+        })
+
+
+    def clear_image_context(self):
+        self.current_image_id = None
+        self.current_description = None
+
+    @property
+    def context_active(self) -> bool:
+        return self.current_image_id is not None
+
+def rota_query(user_input, sessao:ChatSessao):
     query_type = classificar_query(user_input)
 
     if query_type == "EXACT_IMAGE":
-        # Extract filename with regex
+        # Regex
         image_id = extrair_imageid(user_input)
-        return consultaDB(image_id)
 
-    elif query_type == "SEMANTIC_SEARCH":
-        return consultaDB(user_input)  # Your existing semantic search
+        st.success("Requisição por imagem")
+
+        resultado = consultaDB(image_id)
+        #print(resultado)
+        #print(f"ID Da imagem: {resultado['image_name']}")
+        sessao.update_context(resultado['image_name'],resultado['description'])
+
+        get_imagem(resultado['image_name'])
+        st.write(f"**Descrição: ** {resultado['description']}")
+
+        return None
+
+    elif query_type == "SEARCH_IMAGE":
+
+        resultado = consultaDB(user_input)
+        print(resultado)
+
+        sessao.update_context(resultado['image_name'],resultado['description'])
+        get_imagem(resultado['image_name'])
+        st.write(f"**Descrição: ** {resultado['description']}")
+
+        return None 
 
     elif query_type == "DB_QUERY":
-        return analizarDB(user_input)  # New analytics function
-    
+        #return analizarDB(user_input)  
+        return "  "
     else: #OUTROS 
-        return requestGPT(user_input)
-
-class Chat():
-
-    def __init__(self) -> None:
-        item_sessao = ""
-
-        pass
-    
-    def set_itemSessao(self, documento):
-        
-        pass
+        #requestGPT(user_input)
+        return requestGPT(user_input,sessao.current_description,tokens_max=60)
+        #sessao.add_message(role="assistant", content= requestGPT(user_input,sessao.current_description,tokens_max=20))
 
 
 '''

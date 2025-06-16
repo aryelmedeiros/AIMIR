@@ -10,8 +10,11 @@ import hashlib
 from src.database.operations import consultaDB
 from src.database.cliente import ChromaDBClient
 from src.services.arquivos_service import salvar_dados
+from src.services.chat_service import ChatSessao, rota_query
 
 load_dotenv()
+
+sessao = ChatSessao()
 # --- Streamlit UI ---
 st.title("Assistente de Imagens Medicas 🩻")
 st.caption("ℹ️ Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
@@ -32,49 +35,24 @@ with st.sidebar:
 if botao_enviar:
     salvar_dados(uploaded_image,uploaded_audio,uplaoded_description)
 
-query = False
-#query = st.text_input("Faça uma pergunta sobre os dados armazenados ou passe o nome do arquivo que quira tratar")
+if "session" not in st.session_state:
+    st.session_state.session = ChatSessao()  
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# Display chat
+st.session_state.session.display_chat()
 
-# Hisotrico de Mensagens
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# Prompt do usuario
+# User input
 if prompt := st.chat_input("Faça uma consulta..."):
-    # Add prompt ao historico
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    # Apresentar mensagem do usuarip
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # Simulate an AI response (replace with your actual LLM logic)
+    
+    st.session_state.session.add_message("user", prompt)
+    
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            # Your AI model call would go here
+        with st.spinner("Carregando..."):
+            # Primeiro agente 
+            response = rota_query(prompt, st.session_state.session)
 
+            if response != None:
             
-            response = f"Echo: {prompt}" # Simple echo for demonstration
-            st.markdown(response)
-            # Add assistant message to chat history
-            st.session_state.messages.append({"role": "assistant", "content": response})
+                st.session_state.session.add_message("assistant", response)
+                st.markdown(response)
 
-if query:
-    resultado = consultaDB(query)
-
-    caminho = resultado.get("image_path", {})
-    id = resultado.get("image_name", {})
-
-    img = Image.open(caminho)
-
-    st.image(img, caption=id)
-
-    #response = get_cached_response(query,id,collection)
-    response= ""
-
-
-    #resultado = RAG(query,collection)
-# st.write("**Resposta:**", response.choices[0].message.content)
