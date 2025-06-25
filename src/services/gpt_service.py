@@ -39,7 +39,7 @@ def requestGPT_DB(query:str):
                     {"role": "system", "content": query}
                 ]
             )
-            
+
     return response.choices[0].message.content.strip().upper()
 
 def classificar_query(query:str):
@@ -53,13 +53,14 @@ def classificar_query(query:str):
                 {
                     "role": "system",
                     "content": (
-                        "Classifique a consulta em EXACT_IMAGE, SEARCH_IMAGE, DB_QUERY ou OTHER. "
+                        "Classifique a consulta em EXACT_IMAGE, SEARCH_IMAGE, DB_QUERY ou ABOUT_IMAGE. "
                         "Responda APENAS com o nome da categoria, sem pontuação ou explicações.\n\n"
                         "EXEMPLOS:\n"
                         "'Mostre IMG_45' → EXACT_IMAGE\n"
-                        "'Raio-X com cárie' → SEARCH_IMAGE\n"
+                        "'Quais... /Raio-X com cárie' → SEARCH_IMAGE\n"
                         "'Quantas imagens existem?' → DB_QUERY\n"
-                        "'Explique cárie dentária' → OTHER"
+                        "'Explique cárie dentária' → ABOUT_IMAGE\n"
+                        "'O que.../ Onde... / Como ... / Nessa imagem' → ABOUT_IMAGE\n"
                     )
                 },
                 {"role": "user", "content": query}

@@ -79,7 +79,21 @@ def analizarDB(query:str, include_metadata: bool = False, include_documents: boo
     
     # Analyze first 5 items (avoid loading entire collection)
     sample = collection.get(limit=5)
-    
+
+    todas = collection.get()
+
+    if todas["documents"]:
+        stats["sample_descriptions"] = [
+            doc[:100] + "..." if len(doc) > 100 else doc
+            for doc in todas["documents"]
+        ]
+
+    if todas["metadatas"]:
+        for meta in todas["metadatas"]:
+            if meta:  # Check if metadata is not None
+                stats["metadata_fields"].update(meta.keys())
+                
+    '''
     if sample["metadatas"]:
         for meta in sample["metadatas"]:
             stats["metadata_fields"].update(meta.keys())
@@ -88,6 +102,7 @@ def analizarDB(query:str, include_metadata: bool = False, include_documents: boo
         stats["sample_descriptions"] = [
             doc[:100] + "..." for doc in sample["documents"][:3]
         ]
+    '''
 
     prompt = f"""
     Responda de maneira consisa a pergunta com as infos do DB abaixo, importante mencionar na resposta que é uma estimativa caso a resposta não se trate do 'Total Entries' :

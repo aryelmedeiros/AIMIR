@@ -79,9 +79,9 @@ def rota_query(user_input, sessao:ChatSessao):
 
         resultado = consultaDB(user_input)
         total = str(len(resultado))
-        resposta_txt = f'Total de matches: {total}  \n' 
+        resposta_txt = f'**Total de matches: {total}**  \n  \n' 
         for i in resultado:
-            resposta_txt = resposta_txt + str(i["image_id"]) + ": " + str(i['descricao'][:100])+"  \n"
+            resposta_txt = resposta_txt +"**"+ str(i["image_id"])+ "**" + " : " + str(i['descricao'][:100])+"  \n"
 
         return(resposta_txt)
 
@@ -93,6 +93,8 @@ def rota_query(user_input, sessao:ChatSessao):
     elif query_type == "DB_QUERY":
         return analizarDB(user_input)  
         #return "  "
+
+
     else: #OUTROS 
         #requestGPT(user_input)
         return requestGPT(user_input,sessao.current_description,tokens_max=60)
