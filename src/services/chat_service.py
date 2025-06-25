@@ -75,20 +75,24 @@ def rota_query(user_input, sessao:ChatSessao):
 
         return None
 
-    elif query_type == "SEARCH_IMAGE":
+    elif query_type == "SEARCH_IMAGE": #lista de matches
 
         resultado = consultaDB(user_input)
-        print(resultado)
+        total = str(len(resultado))
+        resposta_txt = f'Total de matches: {total}  \n' 
+        for i in resultado:
+            resposta_txt = resposta_txt + str(i["image_id"]) + ": " + str(i['descricao'][:100])+"  \n"
 
-        sessao.update_context(resultado['image_name'],resultado['description'])
-        get_imagem(resultado['image_name'])
-        st.write(f"**Descrição: ** {resultado['description']}")
+        return(resposta_txt)
 
-        return None 
+
+        #sessao.update_context(resultado['image_name'],resultado['description'])
+        #get_imagem(resultado['image_name'])
+        #st.write(f"**Descrição: ** {resultado['description']}")
 
     elif query_type == "DB_QUERY":
-        #return analizarDB(user_input)  
-        return "  "
+        return analizarDB(user_input)  
+        #return "  "
     else: #OUTROS 
         #requestGPT(user_input)
         return requestGPT(user_input,sessao.current_description,tokens_max=60)

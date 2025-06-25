@@ -3,8 +3,14 @@ from src.services.transcricao_service import openai_client
 import hashlib
 #from src.database.operations import consultaDB, updateDB
 
-def requestGPT(query:str, context, tokens_max = None):
-    if tokens_max == None:
+def requestGPT(query:str, context=None, tokens_max = None, collection= None):
+    if collection != None: #caso seja uma pergunta qualquer 
+        response = openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages= query
+            )
+        
+    elif tokens_max == None: #audio
         response = openai_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -12,7 +18,7 @@ def requestGPT(query:str, context, tokens_max = None):
                     {"role": "user", "content": f"Question: {query}\nContext: {context}"}
                 ]
             )
-    else: 
+    else: #texto
         response = openai_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -22,6 +28,18 @@ def requestGPT(query:str, context, tokens_max = None):
                 max_tokens= tokens_max
             )
 
+
+    return response.choices[0].message.content.strip().upper()
+
+def requestGPT_DB(query:str):
+
+    response = openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": query}
+                ]
+            )
+            
     return response.choices[0].message.content.strip().upper()
 
 def classificar_query(query:str):
