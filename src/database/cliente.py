@@ -23,6 +23,12 @@ class ChromaDBClient:
             name=name,
             embedding_function=self.openai_ef
         )
+        
+    def get_cag_collection(self, name: str = "cached_responses") -> chromadb.Collection:
+        return self.client.get_or_create_collection(
+            name=name,
+            embedding_function=self.openai_ef
+        )
     def clear_collection(self, name: str = "image_audio_data") -> bool:
         try:
             self.client.delete_collection(name=name)
@@ -35,3 +41,4 @@ class ChromaDBClient:
 
 db_client = ChromaDBClient()
 collection = db_client.get_collection()
+cag = db_client.get_cag_collection()

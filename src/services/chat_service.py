@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 from ..services.gpt_service import classificar_query
 from ..utils.imagem import extrair_imageid
-from ..database.operations import consultaDB, analizarDB
+from ..database.operations import consultaDB, analizarDB, get_cashed_response,store_cashed_response
 from ..services.gpt_service import requestGPT
 from ..utils.imagem import get_imagem
 
@@ -59,6 +59,8 @@ class ChatSessao():
 def rota_query(user_input, sessao:ChatSessao):
     query_type = classificar_query(user_input)
 
+    #st.success(sessao.current_image_id)
+
     if query_type == "EXACT_IMAGE":
         # Regex
         image_id = extrair_imageid(user_input)
@@ -71,7 +73,7 @@ def rota_query(user_input, sessao:ChatSessao):
         sessao.update_context(resultado['image_name'],resultado['description'])
 
         get_imagem(resultado['image_name'])
-        st.write(f"**Descrição: ** {resultado['description']}")
+        st.write(f"**Descrição:** {resultado['description']}")
 
         return None
 
@@ -91,13 +93,28 @@ def rota_query(user_input, sessao:ChatSessao):
         #st.write(f"**Descrição: ** {resultado['description']}")
 
     elif query_type == "DB_QUERY":
+
+        st.success("Consulta sobre dados gerais")
+ 
         return analizarDB(user_input)  
         #return "  "
 
 
     else: #OUTROS 
         #requestGPT(user_input)
-        return requestGPT(user_input,sessao.current_description,tokens_max=60)
+        resposta_salva = get_cashed_response(user_input,image_name=sessao.current_image_id)
+
+        if resposta_salva:
+            st.success("Resposta em Cache:")
+            return resposta_salva
+
+        else: 
+            st.success("Nova Resposta:")
+            nova_resposta = requestGPT(user_input,sessao.current_description,tokens_max=60)
+
+            store_cashed_response(user_input,nova_resposta,sessao.current_image_id)
+
+            return nova_resposta
         #sessao.add_message(role="assistant", content= requestGPT(user_input,sessao.current_description,tokens_max=20))
 
 
