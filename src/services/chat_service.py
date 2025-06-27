@@ -39,10 +39,10 @@ class ChatSessao():
         
         self.current_image_id = image_id
         self.current_description = description
-        st.success(f"Contexto atual: {image_id} - {description[:50]}...")
+        st.success(f"Contexto atual: {image_id}  \n {description[:50]}...")
         self._history.append({
             "role": "system", 
-            "content": f"Contexto atual: {image_id} \n {description}",
+            "content": f"Contexto atual: {image_id}  \n {description}",
             "time": datetime.now().isoformat(),
             "image": image_id
         })

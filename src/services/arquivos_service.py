@@ -4,14 +4,18 @@ import os
 from PIL import Image
 
 from src.services.transcricao_service import trascricao
+from src.utils.imagem import normalize_for_streamlit
 from src.database.operations import salvarDB
 from src.database.cliente import collection
 
 def salvar_dados(uploaded_image, uploaded_audio, uplaoded_description):
     if uploaded_image is not None:
-        image = Image.open(uploaded_image)
-        st.image(image, caption="Imagem Enviada", use_container_width=True)
 
+        image = Image.open(uploaded_image)
+        print("----------------SALVAR IMAGEM --------------")
+        image = normalize_for_streamlit(image)
+        st.image(image, caption="Imagem Enviada", use_container_width=True)
+        print("----------------SALVAR IMAGEM ---------------------------------------------------")
         if uploaded_audio is not None:
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_audio:

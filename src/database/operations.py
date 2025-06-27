@@ -5,6 +5,7 @@ from ..database.cliente import collection, cag
 from ..services.gpt_service import requestGPT, requestGPT_DB
 
 def salvarDB(imagem, transcricao):
+    print("----------------SALVAR IMAGEM --------------")
     image_path = salvar_imagem(imagem)
     image_id = imagem.name
     st.success(str(image_path))
@@ -56,8 +57,8 @@ def consultaDB(query:str,  include_metadata: bool = False, include_documents: bo
         matches = []
         for i in range(len(results["ids"][0])):
             distance = results["distances"][0][i]
-            print(f'A distancia é de: {distance}, mas a similaridade é de {1-distance}')
-            if distance <= 1.39:  #valor que se distancia
+            #print(f'A distancia é de: {distance}, mas a similaridade é de {1-distance}')
+            if distance <= 1.2:  #valor que se distancia
                 match = {
                     "image_id": results["ids"][0][i],
                     "image_name": results["metadatas"][0][i]["image_name"],
