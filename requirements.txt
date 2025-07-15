@@ -4,5 +4,5 @@ openai
 chromadb
 PyMuPDF
 PyPDF2
-tiktoken
-langchain-community
+python-multipart 
+pillow

@@ -1,6 +1,12 @@
 # Ignore Python environment
 .venv/
 
+.env
+secrets.tom
+
+chroma_db/
+data/imagens/
+
 # Ignore compiled files
 
 __pycache__/
